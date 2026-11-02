@@ -9,12 +9,12 @@
   <link rel="icon" href="logo.png" type="image/png">
   <style>
     * { box-sizing: border-box; }
-    html { min-height: 100%; background: #f4f6f2; }
+    html { height: 100%; overflow: hidden; background: #f4f6f2; }
     body { margin: 0; min-height: 100vh; min-height: 100svh; display: grid; place-items: center; padding: 32px; background: radial-gradient(ellipse at 18% 20%, #dde9e1 0, transparent 52%), radial-gradient(ellipse at 85% 82%, #eee8cd 0, transparent 48%), #f4f6f2; }
     main { position: relative; isolation: isolate; width: min(100%, 480px); }
     .sunshine { position: absolute; inset: -18%; z-index: -1; border-radius: 50%; pointer-events: none; opacity: 0; background: radial-gradient(circle, #efd46c99 20%, #d7bc57a6 42%, #5aaf7b66 55%, #397c8952 64%, transparent 73%); filter: blur(18px); }
     .sunshine::after { content: ''; position: absolute; inset: -5%; border-radius: inherit; background: repeating-conic-gradient(from 8deg, #e8c75a00 0deg, #e8c75aaa 5deg, #6caa7d66 10deg, #397c8933 13deg, transparent 18deg, transparent 24deg); mask-image: radial-gradient(circle, transparent 35%, #000 48%, #0008 60%, transparent 72%); filter: blur(7px); }
-    body { overflow-x: clip; }
+    body { overflow: hidden; height: 100vh; height: 100svh; }
     .logo { display: block; width: 100%; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }
     .logo:focus-visible { outline: 3px solid #407d59; outline-offset: 10px; }
     img { display: block; width: 100%; height: auto; user-select: none; border-radius: 50%; box-shadow: 0 24px 80px #203b2e12; }
