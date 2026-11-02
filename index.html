@@ -12,11 +12,39 @@
     html { min-height: 100%; background: #f4f6f2; }
     body { margin: 0; min-height: 100vh; min-height: 100svh; display: grid; place-items: center; padding: 32px; background: radial-gradient(ellipse at 18% 20%, #dde9e1 0, transparent 52%), radial-gradient(ellipse at 85% 82%, #eee8cd 0, transparent 48%), #f4f6f2; }
     main { width: min(100%, 480px); }
-    img { display: block; width: 100%; height: auto; border-radius: 50%; box-shadow: 0 24px 80px #203b2e12; }
+    .logo { display: block; width: 100%; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .logo:focus-visible { outline: 3px solid #407d59; outline-offset: 10px; }
+    img { display: block; width: 100%; height: auto; user-select: none; border-radius: 50%; box-shadow: 0 24px 80px #203b2e12; }
     @media (max-width: 480px) { body { padding: 36px; } }
   </style>
 </head>
 <body>
-  <main aria-label="AIFERMA"><img src="logo.png" alt="FERMA AI — логотип" width="1254" height="1254"></main>
+  <main aria-label="AIFERMA"><button class="logo" type="button" aria-label="Вращать логотип FERMA AI"><img src="logo.png" alt="FERMA AI — логотип" width="1254" height="1254" draggable="false"></button></main>
+  <script>
+    const logo = document.querySelector('.logo');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let spinning = false;
+    logo.addEventListener('click', async () => {
+      if (spinning) return;
+      spinning = true;
+      const frames = reducedMotion.matches
+        ? [{ opacity: 1 }, { opacity: .75 }, { opacity: 1 }]
+        : [
+            { transform: 'rotate(0deg) scale(1)', offset: 0 },
+            { transform: 'rotate(-12deg) scale(.96)', offset: .12 },
+            { transform: 'rotate(180deg) scale(1.04)', offset: .52 },
+            { transform: 'rotate(364deg) scale(1.01)', offset: .88 },
+            { transform: 'rotate(360deg) scale(1)', offset: 1 }
+          ];
+      try {
+        await logo.animate(frames, {
+          duration: reducedMotion.matches ? 240 : 1800,
+          easing: 'cubic-bezier(.45, 0, .2, 1)'
+        }).finished;
+      } finally {
+        spinning = false;
+      }
+    });
+  </script>
 </body>
 </html>
