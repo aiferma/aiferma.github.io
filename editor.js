@@ -2,6 +2,7 @@
 const el = id => document.getElementById(id);
 const textDecoder = new TextDecoder();
 let token = sessionStorage.getItem('aiferma:admin') || '';
+let openSequence = 0;
 let head = '', files = [], selected = '', mode = 'visual', selectedImage = null, busy = false;
 const originals = new Map(), changes = new Map(), imageURLs = new Map();
 const textFile = path => /\.(html|css|js|json|svg)$/.test(path);
@@ -72,14 +73,18 @@ async function load() {
  status();
 }
 async function openFile(path) {
+ const sequence = ++openSequence;
+ el('code').disabled = true; el('preview').style.pointerEvents = 'none';
+ const value = decode(await fileContent(path));
+ if (sequence !== openSequence) return;
  selectedImage = null; selected = path; el('file').value = path;
- const value = decode(await fileContent(path)); el('code').value = value;
+ el('code').value = value; el('code').disabled = false; el('preview').style.pointerEvents = '';
  const html = path.endsWith('.html');
  el('visual').disabled = !html;
  if (!html && mode === 'visual') mode = /\.(js|json)$/.test(path) ? 'texts' : 'source';
  el('preview').hidden = mode !== 'visual'; el('code').hidden = mode !== 'source'; el('text-fields').hidden = mode !== 'texts';
- if (mode === 'texts') renderTexts(value);
  el('mode-note').textContent = mode === 'visual' ? 'Нажмите на текст или картинку. Ссылки в предпросмотре отключены.' : 'Полное содержимое файла. Вопросы и подписи опросника находятся также в short-model.js и short-survey.js.';
+ if (mode === 'texts') renderTexts(value);
  if (mode === 'visual') await preview(value);
 }
 let previewDocument;
@@ -221,6 +226,7 @@ function renderTexts(value) {
  const apply=()=>{
   let result=value;
   for (const entry of [...entries].reverse()) {
+   if (!entry.changed) continue;
    let content=entry.text;
    if (entry.quote) content=entry.quote+content.replace(/\\/g,'\\\\').replace(new RegExp(entry.quote,'g'),'\\'+entry.quote).replace(/\r/g,'\\r').replace(/\n/g,'\\n')+entry.quote;
    else content=content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/`/g,'&#96;').replace(/\$/g,'&#36;');
@@ -231,7 +237,7 @@ function renderTexts(value) {
  for (const [index,entry] of entries.entries()) {
   const label=document.createElement('label');label.textContent='Текст '+(index+1);
   const input=document.createElement('textarea');input.value=entry.text;input.rows=2;
-  input.oninput=()=>{entry.text=input.value;apply();};
+  input.oninput=()=>{entry.text=input.value;entry.changed=true;apply();};
   label.append(input);host.append(label);
  }
 }
