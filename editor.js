@@ -1,4 +1,5 @@
 'use strict';
+import {extractTexts,applyTexts} from './editor-text.js?v=3';
 const el = id => document.getElementById(id);
 const textDecoder = new TextDecoder();
 let token = sessionStorage.getItem('aiferma:admin') || '';
@@ -111,7 +112,8 @@ async function preview(value) {
   const match = displayed.querySelector('[data-editor-id="'+node.getAttribute('data-editor-id')+'"]');
   if (!match) continue;
   if (node.tagName === 'IMG' && imageURLs.has(node.getAttribute('src'))) match.setAttribute('src',imageURLs.get(node.getAttribute('src')));
-  if (!node.children.length && node.textContent.trim() && !node.matches('script,style,input,textarea,select,option')) match.setAttribute('contenteditable','true');
+  const inlineText = [...node.children].every(child => ['BR','SPAN','STRONG','EM','B','I'].includes(child.tagName));
+  if (inlineText && node.textContent.trim() && !node.matches('script,style,input,textarea,select,option') && !match.parentElement.closest('[contenteditable]')) match.setAttribute('contenteditable','true');
  }
  el('preview').onload = () => {
   const doc = el('preview').contentDocument;
@@ -182,23 +184,23 @@ el('publish').onclick = () => {
 };
 el('publish-dialog').addEventListener('close',async () => {
  if (el('publish-dialog').returnValue !== 'publish') return;
- busy=true;status();el('editor-error').hidden=true;
+ busy=true;el('editor-work').inert=true;status();el('editor-error').hidden=true;
  try {
   await api('editorPublish',{base:head,message:el('message').value,files:[...changes].map(([path,content])=>({path,content}))});
   changes.clear();await load();
   el('state').textContent='Версия сохранена. GitHub Pages публикует сайт. Проверьте результат через несколько минут.';
  } catch(error) { fail(error); }
- finally {busy=false;el('publish').disabled=!changes.size;}
+ finally {busy=false;el('editor-work').inert=false;el('publish').disabled=!changes.size;}
 });
 async function restore(version) {
  if (busy) return;
  if (!confirm('Восстановить весь сайт до '+version.sha.slice(0,7)+'? Неопубликованные правки будут сброшены после успешного восстановления.')) return;
- busy=true;status();
+ busy=true;el('editor-work').inert=true;status();
  try {
   await api('editorRestore',{base:head,version:version.sha});
   changes.clear();await load();el('state').textContent='Версия восстановлена. GitHub Pages публикует сайт.';
  } catch(error) { fail(error); }
- finally {busy=false;el('publish').disabled=!changes.size;}
+ finally {busy=false;el('editor-work').inert=false;el('publish').disabled=!changes.size;}
 }
 window.addEventListener('beforeunload',event => {if(changes.size){event.preventDefault();event.returnValue='';}});
 if (token) load().catch(fail);
@@ -210,28 +212,12 @@ function renderTexts(value) {
   const note = document.createElement('p'); note.textContent = 'Для текстов HTML используйте режим «На странице». Полное содержимое доступно в режиме «Код / тексты».';
   host.append(note); return;
  }
- // Capture quoted labels and plain text inside HTML templates, without evaluating code.
- for (const match of value.matchAll(/'(?:\\.|[^'\\\r\n])*'|"(?:\\.|[^"\\\r\n])*"/g)) {
-  const raw = match[0].slice(1,-1);
-  if (/[А-Яа-яЁё]/.test(raw) && raw.length >= 4 && !/[<>$]/.test(raw)) entries.push({start:match.index,end:match.index+match[0].length,quote:match[0][0],text:raw.replace(/\\n/g,'\n').replace(/\\(['"\\])/g,'$1')});
- }
- for (const match of value.matchAll(/>([^<>]+)</g)) {
-  const raw=match[1];
-  const start=match.index+1,end=start+raw.length;
-  if (/[А-Яа-яЁё]/.test(raw) && !raw.includes('${') && !entries.some(entry=>start<entry.end&&end>entry.start)) entries.push({start,end,quote:null,text:raw});
- }
- entries.sort((a,b)=>a.start-b.start);
+ try {entries.push(...extractTexts(value,selected.endsWith('.json')));}
+ catch(error) {host.textContent='Не удалось разобрать файл. Используйте режим «Код / тексты». '+error.message;return;}
  if (!entries.length) {host.textContent='В этом файле нет отдельных текстовых подписей. Используйте режим «Код / тексты».';return;}
  el('mode-note').textContent='Изменяйте подписи в полях. Структура и логика файла сохраняются.';
  const apply=()=>{
-  let result=value;
-  for (const entry of [...entries].reverse()) {
-   if (!entry.changed) continue;
-   let content=entry.text;
-   if (entry.quote) content=entry.quote+content.replace(/\\/g,'\\\\').replace(new RegExp(entry.quote,'g'),'\\'+entry.quote).replace(/\r/g,'\\r').replace(/\n/g,'\\n')+entry.quote;
-   else content=content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/`/g,'&#96;').replace(/\$/g,'&#36;');
-   result=result.slice(0,entry.start)+content+result.slice(entry.end);
-  }
+  const result=applyTexts(value,entries);
   setChange(selected,encode(result));el('code').value=result;
  };
  for (const [index,entry] of entries.entries()) {
