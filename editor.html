@@ -18,7 +18,7 @@
 <div class="editor-grid">
 <aside class="card editor-aside">
 <label for="file">Страница или файл</label><select id="file"></select>
-<div class="editor-modes"><button class="btn secondary" id="visual">На странице</button><button class="btn secondary" id="source">Код / тексты</button></div>
+<div class="editor-modes"><button class="btn secondary" id="visual">На странице</button><button class="btn secondary" id="texts">Тексты</button><button class="btn secondary" id="source">Код / тексты</button></div>
 <p class="muted">На странице нажмите на текст и напечатайте новый. Для картинки нажмите на неё и выберите замену.</p>
 <label for="image">Добавить изображение</label><input type="file" id="image" accept="image/png,image/jpeg,image/webp,image/gif">
 <p class="muted">PNG, JPG, WebP или GIF, до 2 МБ. Затем выберите его у картинки на странице.</p>
@@ -29,7 +29,7 @@
 <section class="card editor-stage">
 <p id="mode-note">Выберите страницу.</p>
 <iframe id="preview" title="Редактируемая страница" sandbox="allow-same-origin"></iframe>
-<textarea id="code" spellcheck="false" aria-label="Содержимое файла" hidden></textarea>
+<div id="text-fields" hidden></div><textarea id="code" spellcheck="false" aria-label="Содержимое файла" hidden></textarea>
 </section>
 </div>
 </div>

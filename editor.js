@@ -76,8 +76,9 @@ async function openFile(path) {
  const value = decode(await fileContent(path)); el('code').value = value;
  const html = path.endsWith('.html');
  el('visual').disabled = !html;
- if (!html) mode = 'source';
- el('preview').hidden = mode !== 'visual'; el('code').hidden = mode !== 'source';
+ if (!html && mode === 'visual') mode = /\.(js|json)$/.test(path) ? 'texts' : 'source';
+ el('preview').hidden = mode !== 'visual'; el('code').hidden = mode !== 'source'; el('text-fields').hidden = mode !== 'texts';
+ if (mode === 'texts') renderTexts(value);
  el('mode-note').textContent = mode === 'visual' ? 'Нажмите на текст или картинку. Ссылки в предпросмотре отключены.' : 'Полное содержимое файла. Вопросы и подписи опросника находятся также в short-model.js и short-survey.js.';
  if (mode === 'visual') await preview(value);
 }
@@ -157,6 +158,7 @@ el('image').onchange = async () => {
 el('code').oninput = () => setChange(selected,encode(el('code').value));
 el('file').onchange = () => openFile(el('file').value).catch(fail);
 el('visual').onclick = () => {mode='visual';openFile(selected).catch(fail);};
+el('texts').onclick = () => {mode='texts';openFile(selected).catch(fail);};
 el('source').onclick = () => {mode='source';openFile(selected).catch(fail);};
 el('discard').onclick = async () => {
  if (!confirm('Отменить неопубликованные изменения этого файла?')) return;
@@ -195,3 +197,41 @@ async function restore(version) {
 }
 window.addEventListener('beforeunload',event => {if(changes.size){event.preventDefault();event.returnValue='';}});
 if (token) load().catch(fail);
+
+function renderTexts(value) {
+ const host = el('text-fields'); host.replaceChildren();
+ const entries = [];
+ if (selected.endsWith('.html')) {
+  const note = document.createElement('p'); note.textContent = 'Для текстов HTML используйте режим «На странице». Полное содержимое доступно в режиме «Код / тексты».';
+  host.append(note); return;
+ }
+ // Capture quoted labels and plain text inside HTML templates, without evaluating code.
+ for (const match of value.matchAll(/'(?:\\.|[^'\\\r\n])*'|"(?:\\.|[^"\\\r\n])*"/g)) {
+  const raw = match[0].slice(1,-1);
+  if (/[А-Яа-яЁё]/.test(raw) && raw.length >= 4 && !/[<>$]/.test(raw)) entries.push({start:match.index,end:match.index+match[0].length,quote:match[0][0],text:raw.replace(/\\n/g,'\n').replace(/\\(['"\\])/g,'$1')});
+ }
+ for (const match of value.matchAll(/>([^<>]+)</g)) {
+  const raw=match[1];
+  const start=match.index+1,end=start+raw.length;
+  if (/[А-Яа-яЁё]/.test(raw) && !raw.includes('${') && !entries.some(entry=>start<entry.end&&end>entry.start)) entries.push({start,end,quote:null,text:raw});
+ }
+ entries.sort((a,b)=>a.start-b.start);
+ if (!entries.length) {host.textContent='В этом файле нет отдельных текстовых подписей. Используйте режим «Код / тексты».';return;}
+ el('mode-note').textContent='Изменяйте подписи в полях. Структура и логика файла сохраняются.';
+ const apply=()=>{
+  let result=value;
+  for (const entry of [...entries].reverse()) {
+   let content=entry.text;
+   if (entry.quote) content=entry.quote+content.replace(/\\/g,'\\\\').replace(new RegExp(entry.quote,'g'),'\\'+entry.quote).replace(/\r/g,'\\r').replace(/\n/g,'\\n')+entry.quote;
+   else content=content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/`/g,'&#96;').replace(/\$/g,'&#36;');
+   result=result.slice(0,entry.start)+content+result.slice(entry.end);
+  }
+  setChange(selected,encode(result));el('code').value=result;
+ };
+ for (const [index,entry] of entries.entries()) {
+  const label=document.createElement('label');label.textContent='Текст '+(index+1);
+  const input=document.createElement('textarea');input.value=entry.text;input.rows=2;
+  input.oninput=()=>{entry.text=input.value;apply();};
+  label.append(input);host.append(label);
+ }
+}
