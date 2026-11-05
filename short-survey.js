@@ -9,6 +9,8 @@ function fresh(contact={},company=''){return {version:2,id:uid(),step:0,situatio
 let draft=read(KEY);if(!draft||draft.version!==2||!Array.isArray(draft.situations)||!draft.detail)draft=fresh(read(PROFILE)||{});
 const old=read(OLD);if(!read(KEY)&&old?.context?.routine){draft=fresh(old.contact||read(PROFILE)||{},old.context.company||'');draft.situations=['other'];draft.example=old.context.routine;draft.department=old.context.department||'';draft.imported=[old.context.routine,...Object.entries(old.pains||{}).map(([k,v])=>k+(v?': '+v:'')),old.impact?.other,old.impact?.result].filter(Boolean).join('\n');}
 draft.situations=draft.situations.filter(id=>SITUATIONS.some(s=>s.id===id)).slice(0,3);draft.step=Math.max(0,Math.min(3,Number(draft.step)||0));
+const selectedExample=new URLSearchParams(location.search).get('example');
+if(!draft.situations.length&&draft.step===0&&SITUATIONS.some(s=>s.id===selectedExample))draft.situations=[selectedExample];
 let submitting=false,completed=false;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(draft));$('#save-status').textContent='Можно вернуться позже';}catch{$('#save-status').textContent='Черновик не сохраняется в этом браузере';}}
 function chips(key,options,multi=false,section='detail'){const value=section==='detail'?draft.detail[key]:draft[key];return `<div class="choices">${options.map(o=>`<button type="button" class="chip" data-key="${key}" data-section="${section}" data-value="${esc(o)}" data-multi="${multi}" aria-pressed="${multi?(value||[]).includes(o):value===o}">${esc(o)}</button>`).join('')}</div>`;}
