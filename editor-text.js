@@ -4,7 +4,7 @@ export function extractTexts(source,json=false) {
  const entries=[];
  function walk(node,parent) {
   if (!node || typeof node!=='object') return;
-  if (node.type==='Literal' && typeof node.value==='string' && /[А-Яа-яЁё]/.test(node.value) && node.value.length>=4 && !(parent?.key===node&&!parent.computed) && !/[<>]/.test(node.value)) {
+  if (node.type==='Literal' && typeof node.value==='string' && /[А-Яа-яЁё]/.test(node.value) && node.value.length>=4 && !/^Г[1-8](\.[1-5])?$/.test(node.value) && !(parent?.key===node&&!parent.computed) && !/[<>]/.test(node.value)) {
    entries.push({start:node.start,end:node.end,kind:'literal',text:node.value});
   }
   if(node.type==='TemplateElement') {
