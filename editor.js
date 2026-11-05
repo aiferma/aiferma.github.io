@@ -6,6 +6,18 @@ let token = sessionStorage.getItem('aiferma:admin') || '';
 let openSequence = 0;
 let head = '', files = [], selected = '', mode = 'visual', selectedImage = null, busy = false;
 const originals = new Map(), changes = new Map(), imageURLs = new Map();
+const fileLabels = {
+ 'index.html':'Главная — логотип и ссылки',
+ 'guide.html':'Примеры автоматизации',
+ 'privacy.html':'Как используются данные',
+ 'survey.html':'Опросник — оформление',
+ 'short-model.js':'Опросник — вопросы и варианты',
+ 'short-survey.js':'Опросник — экраны и подписи',
+ 'admin.html':'Админка — оформление',
+ 'admin.js':'Админка — тексты и логика',
+ 'styles.css':'Общий стиль сайта',
+ 'config.js':'Подключение к базе'
+};
 const textFile = path => /\.(html|css|js|json|svg)$/.test(path);
 function decode(value) { return textDecoder.decode(Uint8Array.from(atob(value), c => c.charCodeAt(0))); }
 function encode(value) {
@@ -46,7 +58,7 @@ async function fileContent(path) {
 function fillFiles() {
  el('file').replaceChildren();
  for (const file of files) {
-  if (textFile(file.path)) el('file').add(new Option(file.path,file.path));
+  if (textFile(file.path)) el('file').add(new Option(fileLabels[file.path] || file.path,file.path));
  }
  el('replacement').replaceChildren(new Option('Выберите изображение',''));
  for (const file of files.filter(file => /\.(png|jpe?g|webp|gif)$/.test(file.path))) {
@@ -93,6 +105,7 @@ async function preview(value) {
  previewDocument = new DOMParser().parseFromString(value,'text/html');
  previewDocument.body.querySelectorAll('*').forEach((node,index) => node.setAttribute('data-editor-id',String(index)));
  const displayed = previewDocument.cloneNode(true);
+ if (selected === 'admin.html') displayed.querySelector('#workspace')?.removeAttribute('hidden');
  displayed.querySelectorAll('script,base,meta[http-equiv],iframe,object,embed').forEach(node => node.remove());
  displayed.querySelectorAll('*').forEach(node => {
   for (const attribute of [...node.attributes]) if (attribute.name.startsWith('on')) node.removeAttribute(attribute.name);
@@ -168,7 +181,7 @@ el('visual').onclick = () => {mode='visual';openFile(selected).catch(fail);};
 el('texts').onclick = () => {mode='texts';openFile(selected).catch(fail);};
 el('source').onclick = () => {mode='source';openFile(selected).catch(fail);};
 el('discard').onclick = async () => {
- if (!confirm('Отменить неопубликованные изменения этого файла?')) return;
+ if (!await confirmAction('Отменить неопубликованные изменения этого файла?')) return;
  changes.delete(selected); await openFile(selected); status();
 };
 el('editor-auth').onsubmit = async event => {
@@ -194,7 +207,7 @@ el('publish-dialog').addEventListener('close',async () => {
 });
 async function restore(version) {
  if (busy) return;
- if (!confirm('Восстановить весь сайт до '+version.sha.slice(0,7)+'? Неопубликованные правки будут сброшены после успешного восстановления.')) return;
+ if (!await confirmAction('Восстановить весь сайт до '+version.sha.slice(0,7)+'? Неопубликованные правки будут сброшены после успешного восстановления.')) return;
  busy=true;el('editor-work').inert=true;status();
  try {
   await api('editorRestore',{base:head,version:version.sha});
@@ -226,4 +239,13 @@ function renderTexts(value) {
   input.oninput=()=>{entry.text=input.value;entry.changed=true;apply();};
   label.append(input);host.append(label);
  }
+}
+
+function confirmAction(message) {
+ const dialog=el('action-dialog');
+ el('action-message').textContent=message;
+ return new Promise(resolve=>{
+  dialog.addEventListener('close',()=>resolve(dialog.returnValue==='confirm'),{once:true});
+  dialog.showModal();
+ });
 }
