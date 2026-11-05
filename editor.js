@@ -1,5 +1,5 @@
 'use strict';
-import {extractTexts,applyTexts} from './editor-text.js?v=3';
+import {extractTexts,applyTexts} from './editor-text.js?v=4';
 const el = id => document.getElementById(id);
 const textDecoder = new TextDecoder();
 let token = sessionStorage.getItem('aiferma:admin') || '';
