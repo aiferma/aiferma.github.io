@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Редактор сайта · AIFERMA</title>
+<link rel="icon" href="logo.png"><link rel="stylesheet" href="styles.css?v=readable3">
+<link rel="stylesheet" href="editor.css"><script src="config.js"></script><script src="editor.js" defer></script>
+</head>
+<body>
+<header><a class="brand" href="admin.html"><img src="logo.png" alt="">AIFERMA / редактор</a><a href="admin.html">← К заявкам</a></header>
+<main class="editor">
+<section class="card" id="editor-login">
+<h1>Редактор сайта</h1><p>Войдите своим ключом администратора.</p>
+<form id="editor-auth"><label for="key">Ключ доступа</label><input type="password" id="key" autocomplete="current-password" required><button class="btn">Войти →</button></form>
+</section>
+<div id="editor-work" hidden>
+<div class="editor-toolbar"><div><h1>Ваш сайт, ваши правки.</h1><p id="state" role="status">Загружаем файлы…</p></div><button class="btn" id="publish" disabled>Опубликовать изменения</button></div>
+<div class="editor-grid">
+<aside class="card editor-aside">
+<label for="file">Страница или файл</label><select id="file"></select>
+<div class="editor-modes"><button class="btn secondary" id="visual">На странице</button><button class="btn secondary" id="source">Код / тексты</button></div>
+<p class="muted">На странице нажмите на текст и напечатайте новый. Для картинки нажмите на неё и выберите замену.</p>
+<label for="image">Добавить изображение</label><input type="file" id="image" accept="image/png,image/jpeg,image/webp,image/gif">
+<p class="muted">PNG, JPG, WebP или GIF, до 2 МБ. Затем выберите его у картинки на странице.</p>
+<label for="replacement">Картинка для замены</label><select id="replacement"><option value="">Выберите изображение</option></select>
+<button class="btn secondary" id="discard" type="button">Отменить правки файла</button>
+<details><summary>Последние 5 версий</summary><div id="versions"></div><p class="muted">Восстановление создаёт новую публикацию всего сайта. Сохраните свои текущие правки перед откатом.</p></details>
+</aside>
+<section class="card editor-stage">
+<p id="mode-note">Выберите страницу.</p>
+<iframe id="preview" title="Редактируемая страница" sandbox="allow-same-origin"></iframe>
+<textarea id="code" spellcheck="false" aria-label="Содержимое файла" hidden></textarea>
+</section>
+</div>
+</div>
+<div class="notice error" id="editor-error" role="alert" hidden></div>
+</main>
+<dialog id="publish-dialog"><form method="dialog"><h2>Опубликовать сайт?</h2><p id="changed-list"></p><label for="message">Что изменили</label><input id="message" maxlength="120" placeholder="Например, обновил описание услуг"><p>Сайт обновится после успешной сборки GitHub Pages. Обычно это занимает несколько минут.</p><div class="editor-modes"><button class="btn secondary" value="cancel">Вернуться</button><button class="btn" value="publish">Опубликовать</button></div></form></dialog>
+</body></html>
