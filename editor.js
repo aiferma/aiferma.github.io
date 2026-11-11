@@ -9,7 +9,6 @@ const originals = new Map(), changes = new Map(), imageURLs = new Map();
 const fileLabels = {
  'index.html':'Главная — логотип и ссылки',
  'guide.html':'Примеры автоматизации',
- 'privacy.html':'Как используются данные',
  'survey.html':'Опросник — оформление',
  'short-model.js':'Опросник — вопросы и варианты',
  'short-survey.js':'Опросник — экраны и подписи',
