@@ -14,7 +14,7 @@ export const SYSTEMS=['Почта','Мессенджеры','Таблицы','CR
 export function normalizeTelegram(value){const m=String(value||'').trim().match(/^(?:https?:\/\/t\.me\/|@)?([A-Za-z][A-Za-z0-9_]{4,31})\/?$/);return m?m[1]:null;}
 export function validateShort(d,step){
  if(step===0&&(!Array.isArray(d.situations)||!d.situations.length))return 'Выберите знакомую ситуацию. Если не знаете, с чего начать, есть кнопка «Пока сложно сформулировать».';
- if(step===3){if(!d.company?.trim())return 'Подскажите название компании — так мы не перепутаем вашу задачу с другой.';if(!normalizeTelegram(d.telegram))return 'Проверьте Telegram: нужно @имя из настроек, например @ivan_work.';if(!d.consent)return 'Чтобы отправить задачу, отметьте согласие на обработку указанных данных.';}
+ if(step===3){if(!d.company?.trim())return 'Подскажите название компании — так мы не перепутаем вашу задачу с другой.';if(!normalizeTelegram(d.telegram))return 'Проверьте Telegram: нужно @имя из настроек, например @ivan_work.';}
  return '';
 }
 export function summaryShort(d){return d.situations.map(id=>SITUATIONS.find(s=>s.id===id)?.label).filter(Boolean).join(' · ');}
@@ -34,5 +34,5 @@ export function buildSubmission(d){
  if(primary==='documents'&&detail.documents?.includes('Отчёты'))pains['Г3.4']='';
  if(primary==='documents'&&detail.documents?.includes('Документы'))pains['Г3.1']='';
  const other=[d.effects?.length?'Что мешает: '+d.effects.join(', '):'',d.frequency?'Как часто: '+d.frequency:'',d.imported?'Ранее начатое описание:\n'+d.imported:''].filter(Boolean).join('\n');
- return {version:1,id:d.id,context:{company:d.company.trim(),department:d.department||'Не указан',role:'Не указана',routine,domain:'',size:'',surveyVersion:'short-v2'},groups,pains,impact:{other,result:'',systems:primary==='copy'?[...new Set([...(detail.from||[]),...(detail.to||[])])]:[],signals:[],restrictions:[],hours:'',people:'',manual:'',urgency:'',budget:'',decision:'',situations:d.situations,effects:d.effects||[],frequency:d.frequency||''},contact:{name:d.name?.trim()||'Не указано',telegram:normalizeTelegram(d.telegram),email:''},source:d.source||'Визитка / сайт',consent:true};
+ return {version:1,id:d.id,context:{company:d.company.trim(),department:d.department||'Не указан',role:'Не указана',routine,domain:'',size:'',surveyVersion:'short-v2'},groups,pains,impact:{other,result:'',systems:primary==='copy'?[...new Set([...(detail.from||[]),...(detail.to||[])])]:[],signals:[],restrictions:[],hours:'',people:'',manual:'',urgency:'',budget:'',decision:'',situations:d.situations,effects:d.effects||[],frequency:d.frequency||''},contact:{name:d.name?.trim()||'Не указано',telegram:normalizeTelegram(d.telegram),email:''},source:d.source||'Визитка / сайт'};
 }
