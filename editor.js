@@ -121,12 +121,31 @@ async function preview(value) {
    const style = document.createElement('style'); style.textContent = decode(await fileContent(path)); link.replaceWith(style);
   }
  }
+ const editableText = new Map();
  for (const node of previewDocument.body.querySelectorAll('[data-editor-id]')) {
   const match = displayed.querySelector('[data-editor-id="'+node.getAttribute('data-editor-id')+'"]');
   if (!match) continue;
   if (node.tagName === 'IMG' && imageURLs.has(node.getAttribute('src'))) match.setAttribute('src',imageURLs.get(node.getAttribute('src')));
-  const inlineText = [...node.children].every(child => ['BR','SPAN','STRONG','EM','B','I'].includes(child.tagName));
-  if (inlineText && node.textContent.trim() && !node.matches('script,style,input,textarea,select,option') && !match.parentElement.closest('[contenteditable]')) match.setAttribute('contenteditable','true');
+  const inlineText = [...node.children].every(child => ['A','BR','SPAN','STRONG','EM','B','I'].includes(child.tagName));
+  if (!inlineText || !node.textContent.trim() || node.matches('script,style,input,textarea,select,option')) continue;
+  if (!node.children.length) {
+   match.setAttribute('contenteditable','plaintext-only');
+   match.dataset.editorText = String(editableText.size);
+   editableText.set(match.dataset.editorText, node);
+   continue;
+  }
+  // Edit each text run independently so saving preserves links and formatting.
+  const originalText = [...node.childNodes].filter(child => child.nodeType === Node.TEXT_NODE);
+  const shownText = [...match.childNodes].filter(child => child.nodeType === Node.TEXT_NODE);
+  shownText.forEach((child, index) => {
+   if (!child.data.trim()) return;
+   const span = displayed.createElement('span');
+   span.setAttribute('contenteditable','plaintext-only');
+   span.textContent = child.data;
+   child.replaceWith(span);
+   span.dataset.editorText = String(editableText.size);
+   editableText.set(span.dataset.editorText, originalText[index]);
+  });
  }
  el('preview').onload = () => {
   const doc = el('preview').contentDocument;
@@ -139,8 +158,7 @@ async function preview(value) {
    }
   });
   doc.addEventListener('input',event => {
-   const id = event.target.getAttribute('data-editor-id');
-   const original = previewDocument.querySelector('[data-editor-id="'+id+'"]');
+   const original = editableText.get(event.target.dataset.editorText);
    if (!original) return;
    original.textContent = event.target.textContent;
    saveVisual();
