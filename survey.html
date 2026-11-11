@@ -1,1 +1,37 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f6f7f2"><title>Расскажите о задаче · AI FERMA</title><meta name="description" content="Найдём, какую рутину в вашем бизнесе можно автоматизировать. Короткий опрос AI FERMA."><link rel="icon" href="logo.png"><link rel="stylesheet" href="styles.css?v=readable3"><script src="config.js"></script><script type="module" src="short-survey.js?v=no-consent"></script></head><body><header><a class="brand" href="index.html"><img src="logo.png" alt="">AI FERMA</a><a class="header-note" href="guide.html">Посмотреть примеры ↗</a></header><main class="shell"><aside class="sidebar"><div class="eyebrow">Начнём с вашей задачи</div><h1>Освободим время<br>для важного.</h1><p class="muted">Несколько простых вопросов — и дальше мы разберёмся вместе.</p><ol class="steps" id="steps"></ol><div class="sidebar-tip">Можно без точных цифр<br>и сложных формулировок.<br><br>Четыре коротких шага.<br>Большинство ответов — кнопками.</div></aside><section class="card" id="survey-card" aria-labelledby="page-title"><div class="topline"><span class="step-count" id="step-count"></span><span class="save-status" id="save-status" role="status"></span></div><div class="progress" aria-hidden="true"><i id="progress"></i></div><form id="survey" novalidate><div id="content"></div><div id="error" class="notice error" role="alert" hidden></div><div class="navigation" id="navigation"><button type="button" class="btn ghost" id="back">← Назад</button><button type="submit" class="btn" id="next">Продолжить <span aria-hidden="true">→</span></button></div></form></section></main><footer><span>© AI FERMA · От задачи к работающему решению</span><span><button id="reset" style="border:0;background:none;color:inherit;font:inherit;text-decoration:underline;cursor:pointer">Удалить черновик</button></span></footer></body></html>
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f6f7f2"><title>Расскажите о задаче · AI FERMA</title><meta name="description" content="Найдём, какую рутину в вашем бизнесе можно автоматизировать. Короткий опрос AI FERMA."><link rel="icon" href="logo.png"><link rel="stylesheet" href="styles.css?v=readable3"><script src="config.js"></script><script type="module" src="short-survey.js?v=consent-dialog"></script><style>
+.consent-dialog {
+  width: min(620px, calc(100% - 32px));
+  max-height: calc(100% - 32px);
+  overflow: auto;
+  padding: clamp(20px, 5vw, 32px);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--white);
+  color: var(--ink);
+}
+.consent-dialog::backdrop { background: #16382d77; }
+.consent-dialog h2 { margin-top: 0; }
+.consent-dialog p { font-size: 15px; }
+.consent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+@media (max-width: 480px) {
+  .consent-actions .btn { width: 100%; }
+}
+</style></head><body><header><a class="brand" href="index.html"><img src="logo.png" alt="">AI FERMA</a><a class="header-note" href="guide.html">Посмотреть примеры ↗</a></header><main class="shell"><aside class="sidebar"><div class="eyebrow">Начнём с вашей задачи</div><h1>Освободим время<br>для важного.</h1><p class="muted">Несколько простых вопросов — и дальше мы разберёмся вместе.</p><ol class="steps" id="steps"></ol><div class="sidebar-tip">Можно без точных цифр<br>и сложных формулировок.<br><br>Четыре коротких шага.<br>Большинство ответов — кнопками.</div></aside><section class="card" id="survey-card" aria-labelledby="page-title"><div class="topline"><span class="step-count" id="step-count"></span><span class="save-status" id="save-status" role="status"></span></div><div class="progress" aria-hidden="true"><i id="progress"></i></div><form id="survey" novalidate><div id="content"></div><div id="error" class="notice error" role="alert" hidden></div><div class="navigation" id="navigation"><button type="button" class="btn ghost" id="back">← Назад</button><button type="submit" class="btn" id="next">Продолжить <span aria-hidden="true">→</span></button></div></form></section></main>
+<dialog class="consent-dialog" id="consent-dialog" aria-labelledby="consent-title" aria-describedby="consent-intro">
+  <h2 id="consent-title">Согласие на обработку персональных данных</h2>
+  <p id="consent-intro">Прочитайте условия и подтвердите согласие, чтобы продолжить.</p>
+  <p>Отправляя анкету, вы соглашаетесь на обработку персональных данных: ФИО, должность и отдел, контактные данные (телефон, email или Telegram), название компании и сведения о рабочих процессах, которые вы опишете.</p>
+  <p>Данные нужны, чтобы разобрать описанные процессы, оценить трудозатраты и подготовить предложение по автоматизации, а также чтобы связаться с вами по результатам.</p>
+  <p>Согласие можно отозвать в любой момент — напишите нам тем способом, которым мы с вами связываемся (телефон, email или Telegram из анкеты).</p>
+  <form class="consent-actions" method="dialog">
+    <button class="btn secondary" value="decline" autofocus>Не согласен</button>
+    <button class="btn" value="accept">Согласен, отправить заявку</button>
+  </form>
+</dialog>
+<footer><span>© AI FERMA · От задачи к работающему решению</span><span><button id="reset" style="border:0;background:none;color:inherit;font:inherit;text-decoration:underline;cursor:pointer">Удалить черновик</button></span></footer></body></html>

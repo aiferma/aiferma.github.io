@@ -36,7 +36,46 @@ $('#survey').addEventListener('input',e=>{const t=e.target;if(['company','telegr
 $('#survey').addEventListener('change',e=>{if(e.target.id==='remember'){draft[e.target.id]=e.target.checked;save();}});
 $('#survey').addEventListener('click',e=>{if(submitting)return;const s=e.target.closest('[data-situation]');if(s){const id=s.dataset.situation,previousPrimary=draft.situations[0];if(draft.situations.includes(id))draft.situations=draft.situations.filter(x=>x!==id);else if(id==='unsure')draft.situations=['unsure'];else{draft.situations=draft.situations.filter(x=>x!=='unsure');if(draft.situations.length>=3)return fail('Давайте начнём с трёх ситуаций. Остальные можно добавить следующей задачей.');draft.situations.push(id);}if(previousPrimary!==draft.situations[0])draft.detail={};render();return;}const chip=e.target.closest('[data-key]');if(chip){const {key,section,value,multi}=chip.dataset,target=section==='root'?draft:draft.detail;if(multi==='true'){const arr=target[key]||[];target[key]=arr.includes(value)?arr.filter(x=>x!==value):[...arr,value];}else target[key]=target[key]===value?'':value;chip.parentElement.querySelectorAll('[data-key]').forEach(el=>el.setAttribute('aria-pressed',multi==='true'?(target[key]||[]).includes(el.dataset.value):target[key]===el.dataset.value));save();return;}if(e.target.closest('#edit-summary')){draft.step=0;render();focusTitle();}});
 async function send(payload){if(!window.AIFERMA_ENDPOINT)throw Error('Приём задач пока настраивается. Ваши ответы сохранены на устройстве.');const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);try{const response=await fetch(window.AIFERMA_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'submit',payload}),signal:controller.signal,redirect:'follow'});if(!response.ok)throw Error('Сервис временно недоступен. Попробуйте ещё раз.');let result;try{result=await response.json();}catch{throw Error('Не получили подтверждение сохранения. Попробуйте ещё раз — дубликат не создастся.');}if(!result.ok||!result.id)throw Error(result.error||'Не удалось сохранить задачу. Попробуйте ещё раз.');return result;}catch(e){if(e.name==='AbortError')throw Error('Ответ задерживается. Можно отправить ещё раз — дубликат не создастся.');if(e instanceof TypeError)throw Error('Не удалось связаться с сервером. Проверьте интернет — ответы сохранены на устройстве.');throw e;}finally{clearTimeout(timer);}}
-$('#survey').addEventListener('submit',async e=>{e.preventDefault();if(submitting||completed)return;const message=validateShort(draft,draft.step);if(message)return fail(message);if(draft.step<3){draft.step++;render();focusTitle();return;}if($('#website').value)return;draft.telegram=normalizeTelegram(draft.telegram);let payload;try{payload=buildSubmission(draft);}catch(e){return fail(e.message);}submitting=true;$('#next').disabled=true;$('#back').disabled=true;$('#next').textContent='Отправляем…';try{const result=await send(payload);completed=true;try{localStorage.removeItem(KEY);localStorage.removeItem(OLD);if(draft.remember)localStorage.setItem(PROFILE,JSON.stringify({name:draft.name,telegram:draft.telegram}));else localStorage.removeItem(PROFILE);}catch{}$('#step-count').textContent='ЗАДАЧА У НАС';$('#save-status').textContent='Успешно отправлено';$('#progress').style.width='100%';$('#navigation').hidden=true;$('#content').innerHTML=`<div class="success-symbol">✓</div><h2 id="page-title" tabindex="-1">Спасибо${draft.name?', '+esc(draft.name):''}.</h2><p class="lede">Теперь задача у нас — вам больше ничего заполнять не нужно.</p><p class="muted">Разберёмся с описанием и напишем в Telegram <strong>@${esc(draft.telegram)}</strong>, чтобы спокойно обсудить детали.</p><small>Номер заявки: ${esc(result.id)}</small><div class="success-actions"><button type="button" class="btn secondary" id="another">Есть ещё одна задача</button><button type="button" class="text-button" id="receipt">Сохранить мои ответы ↓</button></div>`;$('#another').onclick=()=>{const prev=draft;draft=fresh({name:prev.name,telegram:prev.telegram},prev.company);draft.source=prev.source;draft.remember=prev.remember;completed=false;render();focusTitle();};$('#receipt').onclick=()=>{const text=`AI FERMA · ${result.id}\nКомпания: ${payload.context.company}\nЗадача: ${payload.context.routine}\n${payload.impact.other}\nTelegram: @${payload.contact.telegram}\n`;const url=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download=`aiferma-${result.id}.txt`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};focusTitle();}catch(e){fail(e.message);}finally{submitting=false;$('#next').disabled=false;$('#back').disabled=false;$('#next').textContent='Отправить задачу ↗';}});
+const consentDialog = $('#consent-dialog');
+$('#survey').addEventListener('submit', event => {
+ event.preventDefault();
+ if (submitting || completed || consentDialog.open) return;
+ const message = validateShort(draft, draft.step);
+ if (message) return fail(message);
+ if (draft.step < 3) {
+  draft.step++;
+  render();
+  focusTitle();
+  return;
+ }
+ if ($('#website').value) return;
+ consentDialog.returnValue = '';
+ consentDialog.showModal();
+});
+
+consentDialog.addEventListener('close', () => {
+ if (consentDialog.returnValue === 'accept') {
+  submitConfirmed();
+  return;
+ }
+ draft.step = 2;
+ render();
+ focusTitle();
+});
+
+async function submitConfirmed() {
+ if (submitting || completed || draft.step !== 3 || $('#website').value) return;
+ const message = validateShort(draft, 3);
+ if (message) return fail(message);
+ draft.telegram = normalizeTelegram(draft.telegram);
+ let payload;
+ try {
+  payload = { ...buildSubmission(draft), consent: true, privacyVersion: '2026-11-dialog-v1' };
+ } catch (error) {
+  return fail(error.message);
+ }
+ submitting=true;$('#next').disabled=true;$('#back').disabled=true;$('#next').textContent='Отправляем…';try{const result=await send(payload);completed=true;try{localStorage.removeItem(KEY);localStorage.removeItem(OLD);if(draft.remember)localStorage.setItem(PROFILE,JSON.stringify({name:draft.name,telegram:draft.telegram}));else localStorage.removeItem(PROFILE);}catch{}$('#step-count').textContent='ЗАДАЧА У НАС';$('#save-status').textContent='Успешно отправлено';$('#progress').style.width='100%';$('#navigation').hidden=true;$('#content').innerHTML=`<div class="success-symbol">✓</div><h2 id="page-title" tabindex="-1">Спасибо${draft.name?', '+esc(draft.name):''}.</h2><p class="lede">Теперь задача у нас — вам больше ничего заполнять не нужно.</p><p class="muted">Разберёмся с описанием и напишем в Telegram <strong>@${esc(draft.telegram)}</strong>, чтобы спокойно обсудить детали.</p><small>Номер заявки: ${esc(result.id)}</small><div class="success-actions"><button type="button" class="btn secondary" id="another">Есть ещё одна задача</button><button type="button" class="text-button" id="receipt">Сохранить мои ответы ↓</button></div>`;$('#another').onclick=()=>{const prev=draft;draft=fresh({name:prev.name,telegram:prev.telegram},prev.company);draft.source=prev.source;draft.remember=prev.remember;completed=false;render();focusTitle();};$('#receipt').onclick=()=>{const text=`AI FERMA · ${result.id}\nКомпания: ${payload.context.company}\nЗадача: ${payload.context.routine}\n${payload.impact.other}\nTelegram: @${payload.contact.telegram}\n`;const url=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download=`aiferma-${result.id}.txt`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};focusTitle();}catch(e){fail(e.message);}finally{submitting=false;$('#next').disabled=false;$('#back').disabled=false;$('#next').textContent='Отправить задачу ↗';}
+}
 $('#back').onclick=()=>{if(submitting||completed)return;draft.step=Math.max(0,draft.step-1);render();focusTitle();};
 $('#reset').onclick=()=>{if(submitting)return;if(!confirm('Удалить черновик и сохранённый контакт с этого устройства? Отправленные задачи останутся в базе.'))return;try{[KEY,OLD,PROFILE].forEach(k=>localStorage.removeItem(k));}catch{}draft=fresh();completed=false;render();focusTitle();};
 render();
