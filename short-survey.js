@@ -54,13 +54,7 @@ $('#survey').addEventListener('submit', event => {
 });
 
 consentDialog.addEventListener('close', () => {
- if (consentDialog.returnValue === 'accept') {
-  submitConfirmed();
-  return;
- }
- draft.step = 2;
- render();
- focusTitle();
+ if (consentDialog.returnValue === 'accept') submitConfirmed();
 });
 
 async function submitConfirmed() {
